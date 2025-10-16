@@ -3,26 +3,34 @@ const app = express();
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:3002', 'http://192.168.18.252:3002', 'http://172.17.224.1:3002' , 'https://grocery-store-ecommerce-axw5.vercel.app'];
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3002',
+  'http://192.168.18.252:3002',
+  'http://172.17.224.1:3002',
+  'https://grocery-store-ecommerce-axw5.vercel.app'
+];
 
-dotenv.config();
-
-// Middleware
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (Postman, server-to-server)
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-      return callback(new Error(msg), false);
+    // Check if the request origin is in allowedOrigins
+    const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+
+    if (allowedOrigins.includes(cleanOrigin)) {
+      return callback(null, true);
+    } else {
+      console.warn(`Blocked CORS request from: ${origin}`);
+      return callback(new Error('Not allowed by CORS'), false);
     }
-    return callback(null, true);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true // If you need to allow cookies/authentication
+  credentials: true
 }));
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 
@@ -48,5 +56,6 @@ app.use('/api/auth', authRoutes);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
 
 
